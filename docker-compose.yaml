@@ -1,0 +1,42 @@
+services:
+  nginx-service:
+    container_name: nginx-container
+    build:
+      dockerfile: docker/nginx/Dockerfile
+    user: root
+    ports:
+      - "2345:443"
+    volumes:
+      - app-volume:/var/www/keepass-web
+      - ./log/nginx:/var/log/nginx
+    depends_on:
+      - keepass-web-service
+
+  keepass-web-service:
+    container_name: keepass-web-container
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    platform: linux/amd64
+    volumes:
+      - app-volume:/var/www/keepass-web
+      - ./syncthing:/var/www/keepass-web/syncthing
+      - ./log/app:/var/www/keepass-web/var/log
+    depends_on:
+      - syncthing-service
+
+  syncthing-service:
+    container_name: syncthing-container
+    image: syncthing/syncthing:1.27.7
+    user: root
+    volumes:
+      - ./syncthing:/var/syncthing
+    ports:
+      - "2346:8384"
+      - "22001:22000/tcp"
+      - "22001:22000/udp"
+      - "21028:21027/udp"
+    restart: unless-stopped
+
+volumes:
+  app-volume:
