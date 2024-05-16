@@ -5,10 +5,14 @@ services:
       dockerfile: docker/nginx/Dockerfile
     user: root
     ports:
-      - "2345:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - app-volume:/var/www/keepass-web
+      - ./letsencrypt:/etc/letsencrypt
       - ./log/nginx:/var/log/nginx
+    environment:
+      SERVER_HOST: localhost
     depends_on:
       - keepass-web-service
 
@@ -17,6 +21,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+    user: root
     platform: linux/amd64
     volumes:
       - app-volume:/var/www/keepass-web

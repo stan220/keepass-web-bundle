@@ -1,4 +1,5 @@
 /.idea
 
-/syncthing
+/letsencrypt
 /log
+/syncthing
