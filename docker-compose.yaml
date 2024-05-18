@@ -2,42 +2,56 @@ services:
   nginx-service:
     container_name: nginx-container
     build:
+#      context: .
       dockerfile: docker/nginx/Dockerfile
-    user: root
+#    user: root
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - app-volume:/var/www/keepass-web
+      - app-volume:/var/www/keepass-web:ro
       - ./letsencrypt:/etc/letsencrypt
       - ./log/nginx:/var/log/nginx
     environment:
-      SERVER_HOST: localhost
+      - SERVER_HOST=${SERVER_HOST}
+    env_file:
+      - .env
     depends_on:
       - keepass-web-service
 
   keepass-web-service:
     container_name: keepass-web-container
     build:
-      context: .
+#      context: .
       dockerfile: docker/php/Dockerfile
-    user: root
+      args:
+        HOST_UID: 1000
+    user: www-data
     platform: linux/amd64
+    env_file:
+      - .env
     volumes:
       - app-volume:/var/www/keepass-web
       - ./syncthing:/var/www/keepass-web/syncthing
       - ./log/app:/var/www/keepass-web/var/log
+      - ./.env:/var/www/keepass-web/.env
+#    environment:
+#      - USER_ID=1000
     depends_on:
       - syncthing-service
 
   syncthing-service:
     container_name: syncthing-container
-    image: syncthing/syncthing:1.27.7
-    user: root
+    build:
+#      context: .
+      dockerfile: docker/syncthing/Dockerfile
+#    user: root
+    environment:
+      - HTTP_BASIC_AUTH_USERNAME=${HTTP_BASIC_AUTH_USERNAME}
+      - HTTP_BASIC_AUTH_PASSWORD=${HTTP_BASIC_AUTH_PASSWORD}
     volumes:
-      - ./syncthing:/var/syncthing
+      - ./syncthing:/home/sync
     ports:
-      - "2346:8384"
       - "22001:22000/tcp"
       - "22001:22000/udp"
       - "21028:21027/udp"
